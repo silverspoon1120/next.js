@@ -6,8 +6,10 @@
  */
 
 import { parsePageId } from 'notion-utils'
-import { getSiteConfig, getEnv } from './get-config-value'
-import { PageUrlOverridesMap, PageUrlOverridesInverseMap } from './types'
+import posthog from 'posthog-js'
+import { getEnv, getSiteConfig } from './get-config-value'
+import { PageUrlOverridesInverseMap, PageUrlOverridesMap } from './types'
+import Config = posthog.Config
 
 export const rootNotionPageId: string = parsePageId(
   getSiteConfig('rootNotionPageId'),
@@ -26,18 +28,18 @@ export const rootNotionSpaceId: string | null = parsePageId(
 
 export const pageUrlOverrides = cleanPageUrlMap(
   getSiteConfig('pageUrlOverrides', {}) || {},
-  { label: 'pageUrlOverrides' }
-)
-
-export const pageUrlAdditions = cleanPageUrlMap(
-  getSiteConfig('pageUrlAdditions', {}) || {},
-  { label: 'pageUrlAdditions' }
+  'pageUrlOverrides'
 )
 
 export const inversePageUrlOverrides = invertPageUrlOverrides(pageUrlOverrides)
 
-export const environment = process.env.NODE_ENV || 'development'
-export const isDev = environment === 'development'
+export const pageUrlAdditions = cleanPageUrlMap(
+  getSiteConfig('pageUrlAdditions', {}) || {},
+  'pageUrlAdditions'
+)
+
+export const isDev =
+  process.env.NODE_ENV === 'development' || !process.env.NODE_ENV
 
 // general site config
 export const name: string = getSiteConfig('name')
@@ -119,20 +121,26 @@ export const api = {
 // ----------------------------------------------------------------------------
 
 export const fathomId = isDev ? null : process.env.NEXT_PUBLIC_FATHOM_ID
-
 export const fathomConfig = fathomId
   ? {
       excludedDomains: ['localhost', 'localhost:3000']
     }
   : undefined
 
+// PostHog automatically filters events coming from localhost
+export const postHogId = process.env.NEXT_PUBLIC_POSTHOG_ID
+export const postHogConfig: Config = {
+  // See https://posthog.com/docs/integrate/client/js#config
+  api_host: 'https://app.posthog.com',
+  loaded: (posthog_instance) => {
+    console.debug(`PostHog loaded`, posthog_instance)
+    // posthog_instance.identify(unique user id)
+  }
+}
+
 function cleanPageUrlMap(
   pageUrlMap: PageUrlOverridesMap,
-  {
-    label
-  }: {
-    label: string
-  }
+  label: string
 ): PageUrlOverridesMap {
   return Object.keys(pageUrlMap).reduce((acc, uri) => {
     const pageId = pageUrlMap[uri]

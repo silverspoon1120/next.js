@@ -1,5 +1,5 @@
-import Keyv from '@keyvhq/core'
-import KeyvRedis from '@keyvhq/redis'
+import Keyv from 'keyv'
+import KeyvRedis from '@keyv/redis'
 
 import { isRedisEnabled, redisUrl, redisNamespace } from './config'
 
