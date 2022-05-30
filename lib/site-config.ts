@@ -13,7 +13,7 @@ export interface SiteConfig {
   twitter?: string
   github?: string
   linkedin?: string
-  youtube?: string
+  newsletter?: string
   zhihu?: string
 
   defaultPageIcon?: string | null
